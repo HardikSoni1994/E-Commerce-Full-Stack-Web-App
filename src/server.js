@@ -3,13 +3,16 @@ const express = require("express");
 const db = require("./config/db.config");
 const app = express();
 
-const PORT = 3000;
+const PORT = process.env.PORT || 8000;
 
 app.use("/", (req, res) => {
   res.send(
     "<h2>Hello, E-commerce Website is started to build ful-stack functionality real-world web-app.😎😎</h2> ",
   );
 });
+
+// routes
+app.use('/api', require('./routes'));
 
 app.listen(PORT, (error) => {
   if (error) {

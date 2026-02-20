@@ -6,6 +6,7 @@ mongoose
     console.log("MongoDB Connected Successfully");
   })
   .catch((err) => {
+    console.log("MongoDB Connction failed..!");
     console.log("Connection Error: ", err);
   });
 
