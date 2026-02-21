@@ -2,17 +2,18 @@ require("dotenv").config();
 const express = require("express");
 const db = require("./config/db.config");
 const app = express();
+const bcrypt = require('bcryptjs');
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT;
 
-app.use("/", (req, res) => {
-  res.send(
-    "<h2>Hello, E-commerce Website is started to build ful-stack functionality real-world web-app.😎😎</h2> ",
-  );
-});
+app.use(express.json());
+
+// app.use("/", (req, res) => {
+//   res.send();
+// });
 
 // routes
-app.use('/api', require('./routes'));
+app.use("/api", require("./routes"));
 
 app.listen(PORT, (error) => {
   if (error) {
