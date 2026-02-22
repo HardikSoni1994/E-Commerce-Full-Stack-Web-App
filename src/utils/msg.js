@@ -17,6 +17,7 @@ module.exports.MSG = {
     ADMIN_LOGIN_FAILED: "Invalid admin credentials",
     ADMIN_REGISTRATION_SUCCESS: "Admin registration successfully",
     ADMIN_REGISTRATION_FAILED: "Admin registration failed",
+    ADMIN_NOT_FOUND: "Admin not found",
 
     // ===============================
     // 👤 USER MANAGEMENT (ADMIN SIDE)

@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 
 const PORT = process.env.PORT;
 
+app.use(express.urlencoded());
 app.use(express.json());
 
 // app.use("/", (req, res) => {

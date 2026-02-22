@@ -10,4 +10,12 @@ module.exports = class AdminAuthServices {
             
         }
     }
+
+    async singleAdmin(body) {
+        try {
+            return await Admin.findOne(body);
+        } catch (error) {
+            console.log("Single Admin Fetch Error", error);
+        }
+    }
 }
