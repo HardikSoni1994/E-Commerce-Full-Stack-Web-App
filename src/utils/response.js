@@ -1,5 +1,5 @@
-module.exports.successResponse = (status, error = false, message, result) => {
-    return { status, error, message, result};
+module.exports.successResponse = (status, error = false, message, result, token) => {
+    return { status, error, message, result, token};
 }
 
 module.exports.errorResponse = (status = 500, error = true, message) => {

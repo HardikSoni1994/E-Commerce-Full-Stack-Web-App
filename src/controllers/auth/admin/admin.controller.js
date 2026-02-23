@@ -45,8 +45,32 @@ module.exports.loginAdmin = async (req, res) => {
       return res.status(statusCode.UNAUTHORIZED).json(errorResponse(statusCode.UNAUTHORIZED, true, MSG.ADMIN_LOGIN_FAILED));
     }
 
-    return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, MSG.ADMIN_LOGIN_SUCCESS, admin));
+    // JWT Token Generate Logic
+    const payload = {
+      adminId: admin._id,
+      email: admin.email,
+      role: "admin"
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7D"} );
+
+    return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, MSG.ADMIN_LOGIN_SUCCESS, admin, {token}));
     
+  } catch (error) {
+    console.log("Error :", error);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
+  }
+};
+
+module.exports.fetchAllAdmin = async (req, res) => {
+  try {
+    const admins = await adminAuthService.fetchAllAdmin();
+    
+    if(!admins || admins.length === 0){
+        return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "No admins found"));
+    }
+
+    return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, "All Admins Fetched Successfully", admins));
   } catch (error) {
     console.log("Error :", error);
     return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
