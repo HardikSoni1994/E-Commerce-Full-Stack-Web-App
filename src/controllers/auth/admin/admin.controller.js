@@ -162,3 +162,117 @@ module.exports.forgetPassword = async (req, res) => {
   }
 };
 
+// 🛡️ VERIFY OTP & WRONG ATTEMPT LOGIC
+module.exports.verifyOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    const admin = await adminAuthService.singleAdmin({ email: email });
+    if (!admin) {
+      return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "Admin not found with this email"));
+    }
+
+    // --- 1. VERIFY ATTEMPT BLOCK CHECK ---
+    let currentVerifyAttempt = admin.verify_attempt || 0;
+    let currentVerifyExpire = admin.verify_attempt_expire || null;
+
+    if (currentVerifyAttempt >= 3) {
+        if (currentVerifyExpire && new Date(currentVerifyExpire) > new Date()) {
+            return res.status(statusCode.TOO_MANY_REQUESTS).json(
+                errorResponse(statusCode.TOO_MANY_REQUESTS, true, "You've Entered 3 times wrong OTPs please Try again after sometimes.")
+            );
+        } else {
+            // Lock time poora ho gaya, sab reset kar do
+            currentVerifyAttempt = 0;
+            currentVerifyExpire = null;
+        }
+    }
+
+    // --- 2. CHECK IF OTP IS EXPIRED ---
+    if (admin.OTPExpire && new Date(admin.OTPExpire) < new Date()) {
+        return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, "OTP expire ho chuka hai. Naya OTP mangwayein."));
+    }
+
+    // --- 3. CHECK IF OTP IS WRONG ---
+    // Note: 'otp' Postman se String mein aayega, aur DB mein Number hai, isliye Number() lagaya
+    if (admin.OTP !== Number(otp)) {
+        currentVerifyAttempt++; // Galat OTP par attempt badha do
+        
+        if (currentVerifyAttempt >= 3) {
+            // 3 baar galat dala toh 60 minute ka lock
+            currentVerifyExpire = new Date(Date.now() + 1000 * 60 * 60); 
+        }
+
+        await adminAuthService.updateAdmin(admin._id, { 
+            verify_attempt: currentVerifyAttempt, 
+            verify_attempt_expire: currentVerifyExpire 
+        });
+
+        return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, `Galat OTP! Remaining attempts: ${3 - currentVerifyAttempt}`));
+    }
+
+    // --- 4. OTP IS CORRECT (SUCCESS) 🎉 ---
+    // Agar sab sahi hai, toh saare attempts aur OTP database se clear kar do
+    await adminAuthService.updateAdmin(admin._id, { 
+        OTP: 0, 
+        OTPExpire: null, 
+        attempt: 0, 
+        attempt_Expire: null,
+        verify_attempt: 0,
+        verify_attempt_expire: null
+    });
+
+    return res.status(statusCode.OK).json(
+        successResponse(statusCode.OK, false, "OTP Verified Successfully!", { email }) 
+    );
+
+  } catch (error) {
+    console.log("Admin Verify OTP Error:", error);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, "Internal Server Error"));
+  }
+};
+
+// 🔐 RESET PASSWORD LOGIC (Set New Password)
+
+module.exports.resetPassword = async (req, res) => {
+  try {
+    const { email, new_password, confirm_password } = req.body;
+
+    // 1. Check karo dono password match ho rahe hain ya nahi
+    if (new_password !== confirm_password) {
+        return res.status(statusCode.BAD_REQUEST).json(
+            errorResponse(statusCode.BAD_REQUEST, true, "New password aur confirm password match nahi ho rahe!")
+        );
+    }
+
+    // 2. Admin ko database mein dhoondho
+    const admin = await adminAuthService.singleAdmin({ email: email });
+    if (!admin) {
+      return res.status(statusCode.NOT_FOUND).json(
+          errorResponse(statusCode.NOT_FOUND, true, "Admin not found with this email")
+      );
+    }
+
+    // 3. Naye password ko hash (encrypt) karo
+    const bcrypt = require("bcryptjs"); // Agar upar import nahi hai toh yahan kar liya
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(new_password, salt);
+
+    // 4. Database mein naya password update kar do
+    await adminAuthService.updateAdmin(admin._id, { 
+        password: hashedPassword 
+    });
+
+    // 5. Success message bhej do
+    return res.status(statusCode.OK).json(
+        successResponse(statusCode.OK, false, "Password reset successfully! Ab aap login kar sakte hain.", { email }) 
+    );
+
+  } catch (error) {
+    console.log("Admin Reset Password Error:", error);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json(
+        errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, "Internal Server Error")
+    );
+  }
+};
+

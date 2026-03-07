@@ -47,6 +47,14 @@ const adminSchema = mongoose.Schema({
     type: Date, 
     default: null 
   },
+  verify_attempt: {
+    type: Number,
+    default: 0
+  },
+  verify_attempt_expire: {
+    type: Date,
+    default: null
+  },
   create_at: {
     type: String,
     required: true,
