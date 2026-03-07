@@ -24,4 +24,12 @@ module.exports = class UserAuthServices {
       console.log("fetch All User Error", error);
     }
   }
+
+  async updateUser(id, body) {
+        try {
+            return await User.findByIdAndUpdate(id, body, { new: true });
+        } catch (error) {
+            console.log("Update User Error", error);
+        }
+    }
 };

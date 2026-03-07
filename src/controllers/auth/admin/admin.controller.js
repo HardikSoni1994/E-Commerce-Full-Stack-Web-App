@@ -80,7 +80,7 @@ module.exports.fetchAllAdmin = async (req, res) => {
   }
 };
 
-// 🔑 ADMIN FORGOT PASSWORD & OTP LOGIC
+// 🔑 ADMIN FORGET PASSWORD & OTP LOGIC
 module.exports.forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -157,7 +157,7 @@ module.exports.forgetPassword = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("Admin Forgot Password Error:", error);
+    console.log("Admin Forget Password Error:", error);
     return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
   }
 };
