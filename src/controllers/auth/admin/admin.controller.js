@@ -316,3 +316,86 @@ module.exports.updateAdminStatus = async (req, res) => {
         return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
     }
 };
+
+// 🧑‍💼 GET ADMIN PROFILE LOGIC
+module.exports.adminProfile = async (req, res) => {
+    try {
+        const admin = req.admin; 
+
+        return res.status(statusCode.OK).json(
+            successResponse(statusCode.OK, false, MSG.ADMIN_PROFILE_SUCCESS, admin)
+        );
+    } catch (error) {
+        console.log("Admin Profile Error : ", error);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json(
+            errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR)
+        );
+    }
+};
+
+// 🔄 ACTIVE / INACTIVE ADMIN LOGIC
+module.exports.activeOrInActiveAdmin = async (req, res) => {
+    try {
+        // Guard clause: Agar user access karne ki koshish kare
+        if (req.user) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.UNAUTHORIZED_ACCESS));
+        }
+
+        console.log("Toggle Status for Admin ID:", req.query.id);
+
+        // 1. Pehle admin ko database se nikaalo (sirf wahi jo delete nahi hue hain)
+        // Dhyan de: Tumhare service mein fetchSingleAdmin ki jagah singleAdmin naam ka function hai
+        const admin = await adminAuthService.singleAdmin({ _id: req.query.id, isDelete: false });
+
+        if (!admin) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.ADMIN_NOT_FOUND));
+        }
+
+        // 2. Sir ka masterstroke logic (Toggle karna)
+        const updatedAdmin = await adminAuthService.updateAdmin(
+            req.query.id,
+            { isActive: !admin.isActive } 
+            // Note: Agar tum 'moment' package use nahi kar rahe, toh 'update_at' yahan se hata sakte ho, Mongoose automatically timestamps update kar dega.
+        );
+
+        // 3. Dynamic Message create karna
+        const statusMessage = `${admin.first_name} ${admin.last_name} is ${updatedAdmin.isActive ? 'active' : 'inactive'}`;
+
+        return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, statusMessage, updatedAdmin));
+
+    } catch (err) {
+        console.log("Active/Inactive Admin Error : ", err);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
+    }
+};
+
+// 🔐 CHANGE PASSWORD LOGIC (FOR LOGGED-IN ADMIN)
+module.exports.changePassword = async (req, res) => {
+    try {
+        if (req.user) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.UNAUTHORIZED_ACCESS));
+        }
+
+        const admin = await adminAuthService.singleAdmin({ _id: req.admin._id });
+
+        if (!admin) {
+             return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.ADMIN_NOT_FOUND));
+        }
+
+        const isPasswordMatch = await bcrypt.compare(req.body.current_password, admin.password);
+
+        if (!isPasswordMatch) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.CHANGE_PASSWORD_FAILED));
+        }
+
+        const hashedNewPassword = await bcrypt.hash(req.body.new_password, 11);
+
+        await adminAuthService.updateAdmin(req.admin._id, { password: hashedNewPassword });
+
+        return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, MSG.CHANGE_PASSWORD_SUCCESS));
+
+    } catch (err) {
+        console.log("Change Password Error : ", err);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
+    }
+};

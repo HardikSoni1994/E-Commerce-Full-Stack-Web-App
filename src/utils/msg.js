@@ -12,6 +12,8 @@ module.exports.MSG = {
     TOKEN_MISSING: "Authentication token missing",
     TOKEN_INVALID: "Invalid or expired token",
     UNAUTHORIZED_ACCESS: "Unauthorized access",
+    CHANGE_PASSWORD_FAILED: "Current password does not match",
+    CHANGE_PASSWORD_SUCCESS: "Password changed successfully",
 
     ADMIN_LOGIN_SUCCESS: "Admin login successfully",
     ADMIN_LOGIN_FAILED: "Invalid admin credentials",
@@ -19,6 +21,7 @@ module.exports.MSG = {
     ADMIN_REGISTRATION_FAILED: "Admin registration failed",
     ADMIN_NOT_FOUND: "Admin not found",
     ADMIN_DELETE_SUCCESS: "Admin Deleted Successfully",
+    ADMIN_PROFILE_SUCCESS: "Admin Profile fetched successfully",
 
     // ===============================
     // 👤 USER MANAGEMENT (ADMIN SIDE)
