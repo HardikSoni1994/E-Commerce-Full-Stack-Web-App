@@ -35,7 +35,7 @@ module.exports.registerAdmin = async (req, res) => {
 
 module.exports.loginAdmin = async (req, res) => {
   try {
-    const admin = await adminAuthService.singleAdmin({email: req.body.email});
+    const admin = await adminAuthService.singleAdmin({email: req.body.email, isDelete: false, isActive: true});
     
     if (!admin) {
       return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, MSG.ADMIN_NOT_FOUND));
@@ -85,7 +85,7 @@ module.exports.forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const admin = await adminAuthService.singleAdmin({ email: email });
+    const admin = await adminAuthService.singleAdmin({ email: email, isDelete: false, isActive: true });
     
     if (!admin) {
       return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "Admin not found with this email"));
@@ -167,7 +167,7 @@ module.exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const admin = await adminAuthService.singleAdmin({ email: email });
+    const admin = await adminAuthService.singleAdmin({ email: email, isDelete: false, isActive: true });
     if (!admin) {
       return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "Admin not found with this email"));
     }
@@ -194,12 +194,10 @@ module.exports.verifyOTP = async (req, res) => {
     }
 
     // --- 3. CHECK IF OTP IS WRONG ---
-    // Note: 'otp' Postman se String mein aayega, aur DB mein Number hai, isliye Number() lagaya
     if (admin.OTP !== Number(otp)) {
-        currentVerifyAttempt++; // Galat OTP par attempt badha do
+        currentVerifyAttempt++;
         
         if (currentVerifyAttempt >= 3) {
-            // 3 baar galat dala toh 60 minute ka lock
             currentVerifyExpire = new Date(Date.now() + 1000 * 60 * 60); 
         }
 
@@ -246,7 +244,7 @@ module.exports.resetPassword = async (req, res) => {
     }
 
     // 2. Admin ko database mein dhoondho
-    const admin = await adminAuthService.singleAdmin({ email: email });
+    const admin = await adminAuthService.singleAdmin({ email: email, isDelete: false, isActive: true });
     if (!admin) {
       return res.status(statusCode.NOT_FOUND).json(
           errorResponse(statusCode.NOT_FOUND, true, "Admin not found with this email")
@@ -276,3 +274,45 @@ module.exports.resetPassword = async (req, res) => {
   }
 };
 
+// Delete Admin Logic
+module.exports.deleteAdmin = async (req, res) => {
+    try {
+        if (req.user) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.UNAUTHORIZED));
+        }
+
+        console.log("Query ID:", req.query.id);
+
+        const deletedAdmin = await adminAuthService.updateAdmin(req.query.id, { isDelete: true, isActive: false });
+
+        return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, MSG.ADMIN_DELETE_SUCCESS, deletedAdmin));
+
+    } catch (err) {
+        console.log("Delete Admin Error : ", err);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
+    }
+};
+
+// ♻️ REACTIVATE / UPDATE ADMIN STATUS LOGIC
+module.exports.updateAdminStatus = async (req, res) => {
+    try {
+        if (req.user) {
+            return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, MSG.UNAUTHORIZED));
+        }
+
+        console.log("Reactivating Admin ID:", req.query.id);
+
+        // UpdateAdmin service ko use karke wapas active kar do
+        const reactivatedAdmin = await adminAuthService.updateAdmin(req.query.id, { isDelete: false, isActive: true });
+
+        if (!reactivatedAdmin) {
+            return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "Admin database mein nahi mila"));
+        }
+
+        return res.status(statusCode.OK).json(successResponse(statusCode.OK, false, "Admin Status Updated to Active Successfully", reactivatedAdmin));
+
+    } catch (err) {
+        console.log("Update Admin Status Error : ", err);
+        return res.status(statusCode.INTERNAL_SERVER_ERROR).json(errorResponse(statusCode.INTERNAL_SERVER_ERROR, true, MSG.INTERNAL_SERVER_ERROR));
+    }
+};

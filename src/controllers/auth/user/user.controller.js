@@ -34,7 +34,7 @@ module.exports.registerUser = async (req, res) => {
 
 module.exports.loginUser = async (req, res) => {
   try {
-    const user = await UserAuthService.singleUser({email: req.body.email});
+    const user = await UserAuthService.singleUser({email: req.body.email, isDelete: false, isActive: true});
     
     if (!user) {
       return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, MSG.USER_NOT_FOUND));
@@ -83,7 +83,7 @@ module.exports.forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const user = await UserAuthService.singleUser({ email: email });
+    const user = await UserAuthService.singleUser({ email: email, isDelete: false, isActive: true });
     if (!user) {
       return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "User not found with this email"));
     }
@@ -149,7 +149,7 @@ module.exports.verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await UserAuthService.singleUser({ email: email });
+    const user = await UserAuthService.singleUser({ email: email, isDelete: false, isActive: true });
     if (!user) return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "User not found"));
 
     let currentVerifyAttempt = user.verify_attempt || 0;
@@ -195,7 +195,7 @@ module.exports.resetPassword = async (req, res) => {
 
     if (new_password !== confirm_password) return res.status(statusCode.BAD_REQUEST).json(errorResponse(statusCode.BAD_REQUEST, true, "Passwords match nahi ho rahe!"));
 
-    const user = await UserAuthService.singleUser({ email: email });
+    const user = await UserAuthService.singleUser({ email: email, isDelete: false, isActive: true });
     if (!user) return res.status(statusCode.NOT_FOUND).json(errorResponse(statusCode.NOT_FOUND, true, "User not found"));
 
     const salt = await bcrypt.genSalt(10);

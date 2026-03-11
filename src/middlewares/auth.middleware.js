@@ -26,6 +26,11 @@ module.exports.adminAuthMiddleware = async (req, res, next) => {
     if (!admin) {
       return res.status(statusCode.UNAUTHORIZED).json(errorResponse(statusCode.UNAUTHORIZED, true, MSG.UNAUTHORIZED_ACCESS));
     }
+
+    if (admin.isDelete === true || admin.isActive === false) {
+            return res.status(statusCode.UNAUTHORIZED).json(errorResponse(statusCode.UNAUTHORIZED, true, "Access Denied! Your account is either suspended, on leave, or deleted."));
+    }
+
     req.admin = admin;
     next();
   } catch (error) {
@@ -53,7 +58,9 @@ module.exports.userAuthMiddleware = async (req, res, next) => {
       return res.status(statusCode.UNAUTHORIZED).json(errorResponse(statusCode.UNAUTHORIZED, true, MSG.UNAUTHORIZED_ACCESS));
     }
 
-    // Yahan req.admin ki jagah req.user save karenge
+    if (user.isDelete === true || user.isActive === false) {
+            return res.status(statusCode.UNAUTHORIZED).json(errorResponse(statusCode.UNAUTHORIZED, true, "Access Denied! Your account is either suspended, on leave, or deleted."));
+    }
     req.user = user;
     next();
   } catch (error) {

@@ -18,6 +18,7 @@ module.exports.MSG = {
     ADMIN_REGISTRATION_SUCCESS: "Admin registration successfully",
     ADMIN_REGISTRATION_FAILED: "Admin registration failed",
     ADMIN_NOT_FOUND: "Admin not found",
+    ADMIN_DELETE_SUCCESS: "Admin Deleted Successfully",
 
     // ===============================
     // 👤 USER MANAGEMENT (ADMIN SIDE)
