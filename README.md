@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./Zyphronix_-_logo.png" width="400" alt="Zyphronix Logo" />
+  <img src="./Zyphronix-Brand.png" width="400" alt="Zyphronix Logo" />
 </p>
 <h1 align="center" style="margin-top: -25px;">Zyphronix E-Commerce Backend API</h1>
 
